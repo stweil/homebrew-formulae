@@ -2,12 +2,6 @@ class Libguestfs < Formula
   homepage "http://libguestfs.org/"
   desc "tools for accessing and modifying virtual machine disk images"
 
-# attempt for manual build:
-# ./configure --disable-dependency-tracking --disable-silent-rules --prefix=/usr/local --disable-ruby --disable-python --disable-golang --without-libvirt --disable-php --disable-perl --disable-probes --disable-appliance --disable-daemon --disable-ocaml --disable-lua --disable-haskell --disable-erlang --disable-gobject
-
-# current build breaks on _append_history symbol (gnulib?)
-# will have to take a look at patches
-
   stable do
     url "http://download.libguestfs.org/1.40-stable/libguestfs-1.40.2.tar.gz"
     sha256 "ad6562c48c38e922a314cb45a90996843d81045595c4917f66b02a6c2dfe8058"
@@ -214,6 +208,11 @@ class Libguestfs < Formula
     #ENV.deparallelize { system "make", "-C", "builder" }
     system "make"
     #system "make", "check" # 5 FAILs :/
+
+    if build.with? "php"
+      # Put php bindings inside our lib
+      inreplace "php/extension/Makefile", %r{^(EXTENSION_DIR = )(.*)(/php/.*)$}, "\\1#{lib}\\3"
+    end
 
     ENV["REALLY_INSTALL"] = "yes"
     system "make", "install"
