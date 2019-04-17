@@ -98,14 +98,10 @@ class Libguestfs < Formula
   # Bindings & tools
   depends_on "libvirt" => :optional
   option "with-python", "Build with Python bindings"
-  depends_on "python" => :optional
-  option "with-java", "Build with Java bindings"
-  depends_on :java => :optional
+  depends_on "python@2" => :optional
   option "with-perl", "Build with Perl bindings"
   option "with-ruby", "Build with Ruby bindings"
   option "with-php", "Build with PHP bindings"
-  # depends_on "go" => :optional
-  option "with-go", "Build with Go bindings"
 
   # The two required gnulib patches have been reported to gnulib mailing list, but with little effect so far.
   # patch do
@@ -124,7 +120,7 @@ class Libguestfs < Formula
 
   # Since we can't build an appliance, the recommended way is to download a fixed one.
   resource "fixed_appliance" do
-	url "http://download.libguestfs.org/binaries/appliance/appliance-1.40.1.tar.xz"
+    url "http://download.libguestfs.org/binaries/appliance/appliance-1.40.1.tar.xz"
     sha256 "1aaf0bef18514b8e9ebd0c6130ed5188b6f6a7052e4891d5f3620078f48563e6"
   end
 
@@ -159,19 +155,15 @@ class Libguestfs < Formula
       "--disable-golang",
       "--disable-python",
       "--disable-ruby",
+      "--disable-golang",
     ]
 
     args << "--without-libvirt" if build.without? "libvirt"
     args << "--disable-php"  if build.without? "php"
     args << "--disable-perl" if build.without? "perl"
 
-    if build.with? "go"
-      args << "--enable-golang"
-    else
-      args << "--disable-golang"
-    end
-
     # update to 3 if we install these
+    # note - bindings don't currently work with python3
     if build.with? "python"
       ENV.prepend_path "PKG_CONFIG_PATH", `python-config --prefix`.chomp + "/lib/pkgconfig"
       args << "--with-python-installdir=#{lib}/python2.7/site-packages"
@@ -189,16 +181,6 @@ class Libguestfs < Formula
       args << "--disable-ruby"
     end
 
-    # really should be built with java bindings...
-    if build.with? :java
-      args << "--with-java="+`#{Language::Java.java_home_cmd}`.chomp
-    end
-
-    if build.with? "go"
-      inreplace "golang/Makefile.am", %r{^(golangpkgdir = )(.*)(GOROOT.*)(/pkg/.*)$}, "\\1#{lib}/golang\\4"
-      inreplace "golang/Makefile.am", %r{^(golangsrcdir = )(.*)(GOROOT.*)(/src/)(pkg/)(\$\(pkg\).*)$}, "\\1#{lib}/golang\\4\\6"
-    end
-
     system "./configure", *args
 
     # Build fails with just 'make install'
@@ -209,24 +191,8 @@ class Libguestfs < Formula
     system "make"
     #system "make", "check" # 5 FAILs :/
 
-    if build.with? "php"
-      # Put php bindings inside our lib
-      inreplace "php/extension/Makefile", %r{^(EXTENSION_DIR = )(.*)(/php/.*)$}, "\\1#{lib}\\3"
-    end
-
     ENV["REALLY_INSTALL"] = "yes"
     system "make", "install"
-
-    if build.with? "go"
-      # Fix maked go files permission
-      # FileUtils.chmod_R "+w", "#{lib}/golang/src/libguestfs.org/guestfs"
-      # Fix not according Go fmt guideline
-      # system "gofmt", "-w", "#{lib}/golang/src/libguestfs.org/guestfs"
-      # Symlink $GOPATH instead $GOROOT
-      # TODO brew do not parse $GOROOT and $GOPATH
-      # (lib/"golang/pkg").install "#{ENV["GOPATH"]}/pkg"
-      # (lib/"golang/src").install "#{ENV["GOPATH"]}/src"
-    end
 
     libguestfs_path = "#{prefix}/var/libguestfs-appliance"
     mkdir_p libguestfs_path
@@ -246,11 +212,11 @@ class Libguestfs < Formula
       and use libguestfs binaries in the normal way.
 
       For compilers to find libguestfs you may need to set:
-        export LDFLAGS="-L/usr/local/opt/libguestfs@1.32/lib"
-        export CPPFLAGS="-I/usr/local/opt/libguestfs@1.32/include"
+        export LDFLAGS="-L/usr/local/opt/libguestfs/lib"
+        export CPPFLAGS="-I/usr/local/opt/libguestfs/include"
 
       For pkg-config to find libguestfs you may need to set:
-        export PKG_CONFIG_PATH="/usr/local/opt/libguestfs@1.32/lib/pkgconfig"
+        export PKG_CONFIG_PATH="/usr/local/opt/libguestfs/lib/pkgconfig"
 
     EOS
   end
