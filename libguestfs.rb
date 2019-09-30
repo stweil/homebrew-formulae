@@ -100,7 +100,6 @@ class Libguestfs < Formula
   option "with-python", "Build with Python bindings"
   depends_on "python@2" => :optional
   option "with-perl", "Build with Perl bindings"
-  option "with-ruby", "Build with Ruby bindings"
   option "with-php", "Build with PHP bindings"
 
   # The two required gnulib patches have been reported to gnulib mailing list, but with little effect so far.
@@ -150,10 +149,7 @@ class Libguestfs < Formula
       "--disable-haskell",
       "--disable-erlang",
       "--disable-gobject",
-      "--disable-php",
-      "--disable-perl",
       "--disable-golang",
-      "--disable-python",
       "--disable-ruby",
       "--disable-golang",
     ]
@@ -169,16 +165,6 @@ class Libguestfs < Formula
       args << "--with-python-installdir=#{lib}/python2.7/site-packages"
     else
       args << "--disable-python"
-    end
-
-    if build.with? "ruby"
-      # Force ruby bindings to install locally
-      ruby_libdir = "#{lib}/ruby/site_ruby/#{RbConfig::CONFIG["ruby_version"]}"
-      ruby_archdir = "#{ruby_libdir}/#{RbConfig::CONFIG["sitearch"]}"
-      inreplace "ruby/Makefile.am", /\$\(RUBY_LIBDIR\)/, ruby_libdir
-      inreplace "ruby/Makefile.am", /\$\(RUBY_ARCHDIR\)/, ruby_archdir
-    else
-      args << "--disable-ruby"
     end
 
     system "./configure", *args
@@ -212,8 +198,8 @@ class Libguestfs < Formula
       and use libguestfs binaries in the normal way.
 
       For compilers to find libguestfs you may need to set:
-        export LDFLAGS="-L/usr/local/opt/libguestfs/lib"
-        export CPPFLAGS="-I/usr/local/opt/libguestfs/include"
+        export LDFLAGS="-L#{prefix}/lib"
+        export CPPFLAGS="-I#{prefix}/include"
 
       For pkg-config to find libguestfs you may need to set:
         export PKG_CONFIG_PATH="/usr/local/opt/libguestfs/lib/pkgconfig"
