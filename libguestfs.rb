@@ -78,6 +78,7 @@ class Libguestfs < Formula
   depends_on "bison" => :build # macOS bison is one minor revision too old
   depends_on "gnu-sed" => :build # some of the makefiles expect gnu sed functionality
   depends_on "libtool" => :build
+  depends_on "libconfig" => :build
   depends_on "ocaml" => :build
   depends_on "ocaml-findlib" => :build
   depends_on "pkg-config" => :build
